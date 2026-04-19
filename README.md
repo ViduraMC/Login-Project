@@ -1,14 +1,14 @@
-# 🔐 Login Project — Secure Authentication System
+# Login Project — Secure Authentication System
 
 A production-grade, full-stack authentication system built with **Next.js**, **TypeScript**, **Prisma ORM**, and **Neon DB**. Features secure user registration, email verification, JWT-based session management, and password reset functionality.
 
-🌐 **Live Demo:** [https://login-project-bice.vercel.app](https://login-project-bice.vercel.app)
+ **Live Demo:** [https://login-project-bice.vercel.app](https://login-project-bice.vercel.app)
 
-📬 **Postman Collection:** [View API Collection](https://vidurachandrasekara.postman.co/workspace/Vidura-Chandrasekara's-Workspac~98dd7a22-0473-41c9-8a3f-d6be24814006/collection/45889047-8400c3e5-f0aa-4f92-bf8c-e0143e454c2e?action=share&creator=45889047)
+ **Postman Collection:** [View API Collection](https://vidurachandrasekara.postman.co/workspace/Vidura-Chandrasekara's-Workspac~98dd7a22-0473-41c9-8a3f-d6be24814006/collection/45889047-8400c3e5-f0aa-4f92-bf8c-e0143e454c2e?action=share&creator=45889047)
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
@@ -24,7 +24,7 @@ A production-grade, full-stack authentication system built with **Next.js**, **T
 
 ---
 
-## ✨ Features
+##  Features
 
 - **User Registration** with input validation and duplicate email detection
 - **Email Verification** via tokenized verification links
@@ -38,7 +38,7 @@ A production-grade, full-stack authentication system built with **Next.js**, **T
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -55,7 +55,7 @@ A production-grade, full-stack authentication system built with **Next.js**, **T
 
 ---
 
-## 🏗 System Architecture
+##  System Architecture
 
 ![System Architecture Diagram](docs/system-diagram.png)
 
@@ -68,7 +68,7 @@ The system follows a **layered architecture**:
 
 ---
 
-## 🔄 Authentication Flow
+##  Authentication Flow
 
 ![Authentication Flow Chart](docs/flow-chart.png)
 
@@ -90,7 +90,7 @@ The system follows a **layered architecture**:
 
 ---
 
-## 📡 API Endpoints
+##  API Endpoints
 
 ### Registration & Verification
 
@@ -121,7 +121,7 @@ The system follows a **layered architecture**:
 
 ---
 
-## 🗄 Database Schema
+##  Database Schema
 
 The system uses 4 database models:
 
@@ -159,7 +159,7 @@ PasswordResetToken
 
 ---
 
-## 🔒 Security Measures
+##  Security Measures
 
 | Measure | Implementation |
 |---------|---------------|
@@ -176,7 +176,7 @@ PasswordResetToken
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -209,7 +209,7 @@ The app will be running at `http://localhost:3000`.
 
 ---
 
-## 🔑 Environment Variables
+##  Environment Variables
 
 Create a `.env` file in the root directory:
 
@@ -231,7 +231,7 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 ---
 
-## 🌍 Deployment
+##  Deployment
 
 This project is deployed on **Vercel** with automatic deployments from the `main` branch.
 
@@ -254,22 +254,10 @@ main (production) ← development (integration) ← feature/* (working branches)
 | `feature/auth-password-reset` | Forgot/reset password & protected routes |
 | `feature/ui` | Frontend pages |
 
----
-
-## 📊 Diagrams
-
-### System Architecture
-![System Architecture](docs/system-diagram.png)
-
-### Authentication Flow Chart
-![Authentication Flow](docs/flow-chart.png)
-
-### Registration & Email Verification Sequence
-![Sequence Diagram](docs/sequence-diagram.png)
 
 ---
 
-## 👤 Author
+##  Author
 
 **Vidura Malinda Chandrasekara**
 
