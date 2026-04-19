@@ -1,4 +1,4 @@
-# Login Project — Secure Authentication System
+# Login Project - Secure Authentication System
 
 A production-grade, full-stack authentication system built with **Next.js**, **TypeScript**, **Prisma ORM**, and **Neon DB**. Features secure user registration, email verification, JWT-based session management, and password reset functionality.
 
@@ -61,10 +61,10 @@ A production-grade, full-stack authentication system built with **Next.js**, **T
 
 The system follows a **layered architecture**:
 
-1. **Client Layer** — Next.js frontend pages (Login, Register, Dashboard, etc.)
-2. **API Layer** — Next.js API Routes handling authentication logic
-3. **Service Layer** — Core utilities (JWT, Tokens, Email, Validation)
-4. **Data Layer** — Prisma ORM communicating with Neon PostgreSQL
+1. **Client Layer** - Next.js frontend pages (Login, Register, Dashboard, etc.)
+2. **API Layer** - Next.js API Routes handling authentication logic
+3. **Service Layer** - Core utilities (JWT, Tokens, Email, Validation)
+4. **Data Layer** - Prisma ORM communicating with Neon PostgreSQL
 
 ---
 
@@ -115,7 +115,7 @@ The system follows a **layered architecture**:
 | `POST` | `/api/auth/forgot-password` | Send password reset email |
 | `POST` | `/api/auth/reset-password` | Reset password with token |
 
-### Sequence Diagram — Registration & Email Verification
+### Sequence Diagram - Registration & Email Verification
 
 ![Registration and Email Verification Sequence Diagram](docs/sequence-diagram.png)
 
