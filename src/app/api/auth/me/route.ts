@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { getRefreshTokenCookie, clearRefreshTokenCookie } from "@/lib/cookies";
+import { hashToken } from "@/lib/tokens";
 import { ApiResponse, UserResponse } from "@/types";
 
 export async function GET() {
@@ -12,6 +14,24 @@ export async function GET() {
                 { success: false, message: "Not authenticated", statusCode: 401 },
                 { status: 401 }
             );
+        }
+
+        // Check if session still exists (eviction guard)
+        const refreshToken = await getRefreshTokenCookie();
+        if (refreshToken) {
+            const hashedToken = hashToken(refreshToken);
+            const session = await prisma.session.findFirst({
+                where: { refreshToken: hashedToken },
+            });
+
+            if (!session) {
+                // Session was evicted (another device logged in)
+                await clearRefreshTokenCookie();
+                return NextResponse.json<ApiResponse>(
+                    { success: false, message: "Session expired. Please login again.", statusCode: 401 },
+                    { status: 401 }
+                );
+            }
         }
 
         const user = await prisma.user.findUnique({
@@ -34,12 +54,7 @@ export async function GET() {
         };
 
         return NextResponse.json<ApiResponse<UserResponse>>(
-            {
-                success: true,
-                message: "User retrieved successfully",
-                data: userResponse,
-                statusCode: 200,
-            },
+            { success: true, message: "User retrieved successfully", data: userResponse, statusCode: 200 },
             { status: 200 }
         );
     } catch (error) {
