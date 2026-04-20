@@ -36,6 +36,21 @@ export async function POST() {
             );
         }
 
+        // Prevent locked accounts from refreshing tokens
+        if (session.user.lockedUntil && session.user.lockedUntil > new Date()) {
+            const minutesLeft = Math.ceil(
+                (session.user.lockedUntil.getTime() - Date.now()) / 60000
+            );
+            return NextResponse.json<ApiResponse>(
+                {
+                    success: false,
+                    message: `Account is temporarily locked. Try again in ${minutesLeft} minute(s).`,
+                    statusCode: 403,
+                },
+                { status: 403 }
+            );
+        }
+
         // Generate NEW tokens (rotation)
         const newAccessToken = generateAccessToken({
             userId: session.user.id,

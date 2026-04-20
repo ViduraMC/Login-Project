@@ -30,10 +30,9 @@ export async function GET() {
         const session = await prisma.session.findFirst({
             where: {
                 refreshToken: hashedToken,
-                expiresAt: { gt: new Date() }, // reject expired sessions
+                expiresAt: { gt: new Date() },
             },
         });
-
 
         if (!session) {
             await clearRefreshTokenCookie();
@@ -48,6 +47,9 @@ export async function GET() {
         });
 
         if (!user) {
+            // Clean up orphaned session + cookie
+            await prisma.session.deleteMany({ where: { id: session.id } });
+            await clearRefreshTokenCookie();
             return NextResponse.json<ApiResponse>(
                 { success: false, message: "User not found", statusCode: 404 },
                 { status: 404 }
