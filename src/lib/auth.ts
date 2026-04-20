@@ -1,22 +1,23 @@
+import { headers } from "next/headers";
 import { verifyAccessToken, AccessTokenPayload } from "@/lib/jwt";
-import { getAuthCookies } from "@/lib/cookies";
 
 /**
- * Get the currently authenticated user from cookies
- * Returns the token payload if valid, null if not authenticated
+ * Get the currently authenticated user from the Authorization header.
+ * Expects: Authorization: Bearer <access_token>
  */
 export async function getCurrentUser(): Promise<AccessTokenPayload | null> {
     try {
-        const { accessToken } = await getAuthCookies();
+        const headersList = await headers();
+        const authHeader = headersList.get("authorization");
 
-        if (!accessToken) {
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
             return null;
         }
 
-        const payload = verifyAccessToken(accessToken);
+        const token = authHeader.split(" ")[1];
+        const payload = verifyAccessToken(token);
         return payload;
     } catch {
-        // Token expired or invalid
         return null;
     }
 }

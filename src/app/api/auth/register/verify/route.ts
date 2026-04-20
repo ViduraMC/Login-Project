@@ -15,14 +15,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Hash the received token to compare with stored hash
+        // Hash the token and look it up
         const hashedToken = hashToken(token);
 
-        // Find the token in database
         const verificationToken = await prisma.verificationToken.findFirst({
             where: {
                 token: hashedToken,
-                expiresAt: { gt: new Date() }, // gt = "greater than" = not expired
+                expiresAt: { gt: new Date() },
             },
         });
 
@@ -33,27 +32,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Update user: mark email as verified
-        await prisma.user.update({
-            where: { id: verificationToken.userId },
-            data: { emailVerified: true },
-        });
-
-        // Delete the used token (one-time use)
-        await prisma.verificationToken.delete({
-            where: { id: verificationToken.id },
-        });
-
-        return NextResponse.json<ApiResponse>(
+        return NextResponse.json<ApiResponse<{ email: string }>>(
             {
                 success: true,
-                message: "Email verified successfully! You can now log in.",
+                message: "Email verified. You can now complete your registration.",
+                data: { email: verificationToken.email },
                 statusCode: 200,
             },
             { status: 200 }
         );
     } catch (error) {
-        console.error("Email verification error:", error);
+        console.error("Verify token error:", error);
         return NextResponse.json<ApiResponse>(
             { success: false, message: "Internal server error", statusCode: 500 },
             { status: 500 }
