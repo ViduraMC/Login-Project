@@ -16,22 +16,27 @@ export async function GET() {
             );
         }
 
-        // Check if session still exists (eviction guard)
+        // Check if session still exists
         const refreshToken = await getRefreshTokenCookie();
-        if (refreshToken) {
-            const hashedToken = hashToken(refreshToken);
-            const session = await prisma.session.findFirst({
-                where: { refreshToken: hashedToken },
-            });
 
-            if (!session) {
-                // Session was evicted (another device logged in)
-                await clearRefreshTokenCookie();
-                return NextResponse.json<ApiResponse>(
-                    { success: false, message: "Session expired. Please login again.", statusCode: 401 },
-                    { status: 401 }
-                );
-            }
+        if (!refreshToken) {
+            return NextResponse.json<ApiResponse>(
+                { success: false, message: "Session expired. Please login again.", statusCode: 401 },
+                { status: 401 }
+            );
+        }
+
+        const hashedToken = hashToken(refreshToken);
+        const session = await prisma.session.findFirst({
+            where: { refreshToken: hashedToken },
+        });
+
+        if (!session) {
+            await clearRefreshTokenCookie();
+            return NextResponse.json<ApiResponse>(
+                { success: false, message: "Session expired. Please login again.", statusCode: 401 },
+                { status: 401 }
+            );
         }
 
         const user = await prisma.user.findUnique({
