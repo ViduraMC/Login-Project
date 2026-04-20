@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { hashToken } from "@/lib/tokens";
+import { clearRefreshTokenCookie } from "@/lib/cookies";
 import { isValidPassword } from "@/lib/validations";
 import { ApiResponse } from "@/types";
 
@@ -47,7 +48,12 @@ export async function POST(request: NextRequest) {
 
         await prisma.user.update({
             where: { id: resetToken.userId },
-            data: { password: hashedPassword },
+            data: {
+                password: hashedPassword,
+                // Also reset brute-force counters
+                failedLoginAttempts: 0,
+                lockedUntil: null,
+            },
         });
 
         // Delete the used token
@@ -55,10 +61,13 @@ export async function POST(request: NextRequest) {
             where: { id: resetToken.id },
         });
 
-        // Invalidate all sessions (force re-login with new password)
+        // Invalidate ALL sessions (force re-login with new password)
         await prisma.session.deleteMany({
             where: { userId: resetToken.userId },
         });
+
+        // Clear the refresh token cookie on THIS browser too
+        await clearRefreshTokenCookie();
 
         return NextResponse.json<ApiResponse>(
             {
