@@ -42,6 +42,15 @@ export async function GET() {
             );
         }
 
+        // Cross-validate: JWT userId must match session's userId
+        if (session.userId !== currentUser.userId) {
+            await clearRefreshTokenCookie();
+            return NextResponse.json<ApiResponse>(
+                { success: false, message: "Session mismatch. Please login again.", statusCode: 401 },
+                { status: 401 }
+            );
+        }
+
         const user = await prisma.user.findUnique({
             where: { id: currentUser.userId },
         });

@@ -30,10 +30,9 @@ export async function GET() {
         const session = await prisma.session.findFirst({
             where: {
                 refreshToken: hashedToken,
-                expiresAt: { gt: new Date() }, // reject expired sessions
+                expiresAt: { gt: new Date() },
             },
         });
-
 
         if (!session) {
             await clearRefreshTokenCookie();
@@ -43,8 +42,21 @@ export async function GET() {
             );
         }
 
+        // Cross-validate: JWT userId must match session's userId
+        if (session.userId !== currentUser.userId) {
+            await clearRefreshTokenCookie();
+            return NextResponse.json<ApiResponse>(
+                { success: false, message: "Session mismatch. Please login again.", statusCode: 401 },
+                { status: 401 }
+            );
+        }
+
+        // Only return non-expired sessions
         const sessions = await prisma.session.findMany({
-            where: { userId: currentUser.userId },
+            where: {
+                userId: currentUser.userId,
+                expiresAt: { gt: new Date() },
+            },
             select: {
                 id: true,
                 ipAddress: true,
