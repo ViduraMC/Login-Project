@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { getRefreshTokenCookie, clearRefreshTokenCookie } from "@/lib/cookies";
+import { hashToken } from "@/lib/tokens";
 import { ApiResponse, SessionResponse } from "@/types";
 
 export async function GET() {
@@ -10,6 +12,29 @@ export async function GET() {
         if (!currentUser) {
             return NextResponse.json<ApiResponse>(
                 { success: false, message: "Not authenticated", statusCode: 401 },
+                { status: 401 }
+            );
+        }
+
+        // Check if session still exists
+        const refreshToken = await getRefreshTokenCookie();
+
+        if (!refreshToken) {
+            return NextResponse.json<ApiResponse>(
+                { success: false, message: "Session expired. Please login again.", statusCode: 401 },
+                { status: 401 }
+            );
+        }
+
+        const hashedToken = hashToken(refreshToken);
+        const session = await prisma.session.findFirst({
+            where: { refreshToken: hashedToken },
+        });
+
+        if (!session) {
+            await clearRefreshTokenCookie();
+            return NextResponse.json<ApiResponse>(
+                { success: false, message: "Session expired. Please login again.", statusCode: 401 },
                 { status: 401 }
             );
         }
