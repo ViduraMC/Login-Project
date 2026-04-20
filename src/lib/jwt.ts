@@ -1,11 +1,13 @@
 import jwt from "jsonwebtoken";
 
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET!;
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
+
+if (!ACCESS_TOKEN_SECRET) {
+    throw new Error("ACCESS_TOKEN_SECRET environment variable is not set");
+}
 
 // Token expiry times
-const ACCESS_TOKEN_EXPIRY = "15m";   // 15 minutes
-const REFRESH_TOKEN_EXPIRY = "7d";   // 7 days
+const ACCESS_TOKEN_EXPIRY = "15m"; // 15 minutes
 
 export interface AccessTokenPayload {
     userId: string;
@@ -16,7 +18,7 @@ export interface AccessTokenPayload {
  * Generate an access token (short-lived, for API authentication)
  */
 export function generateAccessToken(payload: AccessTokenPayload): string {
-    return jwt.sign(payload, ACCESS_TOKEN_SECRET, {
+    return jwt.sign(payload, ACCESS_TOKEN_SECRET!, {
         expiresIn: ACCESS_TOKEN_EXPIRY,
     });
 }
@@ -26,5 +28,5 @@ export function generateAccessToken(payload: AccessTokenPayload): string {
  * Returns the payload if valid, throws an error if expired or tampered
  */
 export function verifyAccessToken(token: string): AccessTokenPayload {
-    return jwt.verify(token, ACCESS_TOKEN_SECRET) as AccessTokenPayload;
+    return jwt.verify(token, ACCESS_TOKEN_SECRET!) as AccessTokenPayload;
 }

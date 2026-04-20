@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getRefreshTokenCookie, clearRefreshTokenCookie } from "@/lib/cookies";
 import { hashToken } from "@/lib/tokens";
-import { ApiResponse, UserResponse } from "@/types";
+import { ApiResponse, SessionResponse } from "@/types";
 
 export async function GET() {
     try {
@@ -51,34 +51,41 @@ export async function GET() {
             );
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: currentUser.userId },
+        // Only return non-expired sessions
+        const sessions = await prisma.session.findMany({
+            where: {
+                userId: currentUser.userId,
+                expiresAt: { gt: new Date() },
+            },
+            select: {
+                id: true,
+                ipAddress: true,
+                userAgent: true,
+                createdAt: true,
+                expiresAt: true,
+            },
+            orderBy: { createdAt: "desc" },
         });
 
-        if (!user) {
-            // Clean up orphaned session + cookie
-            await prisma.session.deleteMany({ where: { id: session.id } });
-            await clearRefreshTokenCookie();
-            return NextResponse.json<ApiResponse>(
-                { success: false, message: "User not found", statusCode: 404 },
-                { status: 404 }
-            );
-        }
+        const sessionResponses: SessionResponse[] = sessions.map((s) => ({
+            id: s.id,
+            ipAddress: s.ipAddress,
+            userAgent: s.userAgent,
+            createdAt: s.createdAt.toISOString(),
+            expiresAt: s.expiresAt.toISOString(),
+        }));
 
-        const userResponse: UserResponse = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            emailVerified: user.emailVerified,
-            createdAt: user.createdAt.toISOString(),
-        };
-
-        return NextResponse.json<ApiResponse<UserResponse>>(
-            { success: true, message: "User retrieved successfully", data: userResponse, statusCode: 200 },
+        return NextResponse.json<ApiResponse<SessionResponse[]>>(
+            {
+                success: true,
+                message: "Sessions retrieved successfully",
+                data: sessionResponses,
+                statusCode: 200,
+            },
             { status: 200 }
         );
     } catch (error) {
-        console.error("Get me error:", error);
+        console.error("Get sessions error:", error);
         return NextResponse.json<ApiResponse>(
             { success: false, message: "Internal server error", statusCode: 500 },
             { status: 500 }

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { generateAccessToken } from "@/lib/jwt";
-import { getAuthCookies, setAuthCookies } from "@/lib/cookies";
+import { getRefreshTokenCookie, setRefreshTokenCookie, clearRefreshTokenCookie } from "@/lib/cookies";
 import { generateToken, hashToken } from "@/lib/tokens";
-import { ApiResponse } from "@/types";
+import { ApiResponse, RefreshResponse } from "@/types";
 
 export async function POST() {
     try {
-        const { refreshToken } = await getAuthCookies();
+        const refreshToken = await getRefreshTokenCookie();
 
         if (!refreshToken) {
             return NextResponse.json<ApiResponse>(
@@ -16,25 +16,42 @@ export async function POST() {
             );
         }
 
-        // Find the session by hashed refresh token
+        // Find session by hashed refresh token
         const hashedToken = hashToken(refreshToken);
 
         const session = await prisma.session.findFirst({
             where: {
                 refreshToken: hashedToken,
-                expiresAt: { gt: new Date() }, // not expired
+                expiresAt: { gt: new Date() },
             },
-            include: { user: true }, // join with user table
+            include: { user: true },
         });
 
         if (!session) {
+            // Clear stale cookie — session no longer exists in DB
+            await clearRefreshTokenCookie();
             return NextResponse.json<ApiResponse>(
                 { success: false, message: "Invalid or expired refresh token", statusCode: 401 },
                 { status: 401 }
             );
         }
 
-        // Generate NEW tokens (token rotation)
+        // Prevent locked accounts from refreshing tokens
+        if (session.user.lockedUntil && session.user.lockedUntil > new Date()) {
+            const minutesLeft = Math.ceil(
+                (session.user.lockedUntil.getTime() - Date.now()) / 60000
+            );
+            return NextResponse.json<ApiResponse>(
+                {
+                    success: false,
+                    message: `Account is temporarily locked. Try again in ${minutesLeft} minute(s).`,
+                    statusCode: 403,
+                },
+                { status: 403 }
+            );
+        }
+
+        // Generate NEW tokens (rotation)
         const newAccessToken = generateAccessToken({
             userId: session.user.id,
             email: session.user.email,
@@ -43,7 +60,7 @@ export async function POST() {
         const newPlainRefreshToken = generateToken();
         const newHashedRefreshToken = hashToken(newPlainRefreshToken);
 
-        // Update the session with the new refresh token
+        // Update session with new refresh token
         await prisma.session.update({
             where: { id: session.id },
             data: {
@@ -52,13 +69,15 @@ export async function POST() {
             },
         });
 
-        // Set new cookies
-        await setAuthCookies(newAccessToken, newPlainRefreshToken);
+        // Set new refresh token cookie
+        await setRefreshTokenCookie(newPlainRefreshToken);
 
-        return NextResponse.json<ApiResponse>(
+        // Return new access token in body
+        return NextResponse.json<ApiResponse<RefreshResponse>>(
             {
                 success: true,
                 message: "Tokens refreshed successfully",
+                data: { accessToken: newAccessToken },
                 statusCode: 200,
             },
             { status: 200 }
