@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Step 3: Check if account is locked (brute-force protection)
+        // Step 3: Check if account is locked
         if (user.lockedUntil && user.lockedUntil > new Date()) {
             const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
             return NextResponse.json<ApiResponse>(
@@ -66,13 +66,9 @@ export async function POST(request: NextRequest) {
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-            // Increment failed attempts
             const newAttempts = user.failedLoginAttempts + 1;
-            let lockedUntil = null;
-
-            if (newAttempts >= 5) {
-                lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15-minute lockout
-            }
+            const lockedUntil: Date | null =
+                newAttempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null;
 
             await prisma.user.update({
                 where: { id: user.id },
@@ -92,14 +88,21 @@ export async function POST(request: NextRequest) {
         }
 
         // Step 6: Reset failed attempts on successful login
-        if (user.failedLoginAttempts > 0) {
+        if (user.failedLoginAttempts > 0 || user.lockedUntil) {
             await prisma.user.update({
                 where: { id: user.id },
                 data: { failedLoginAttempts: 0, lockedUntil: null },
             });
         }
 
-        // Step 7: Enforce 2-session limit
+        // Step 7: Clean up expired sessions first, then enforce 2-session limit
+        await prisma.session.deleteMany({
+            where: {
+                userId: user.id,
+                expiresAt: { lt: new Date() }, // delete expired sessions first
+            },
+        });
+
         const existingSessions = await prisma.session.findMany({
             where: { userId: user.id },
             orderBy: { createdAt: "asc" },
@@ -110,7 +113,6 @@ export async function POST(request: NextRequest) {
                 0,
                 existingSessions.length - MAX_SESSIONS + 1
             );
-
             await prisma.session.deleteMany({
                 where: { id: { in: sessionsToDelete.map((s) => s.id) } },
             });
@@ -140,7 +142,7 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        // Step 10: Set ONLY refresh token as cookie
+        // Step 10: Set refresh token as cookie
         await setRefreshTokenCookie(plainRefreshToken);
 
         // Step 11: Return access token in response body

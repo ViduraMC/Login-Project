@@ -28,8 +28,12 @@ export async function GET() {
 
         const hashedToken = hashToken(refreshToken);
         const session = await prisma.session.findFirst({
-            where: { refreshToken: hashedToken },
+            where: {
+                refreshToken: hashedToken,
+                expiresAt: { gt: new Date() }, // reject expired sessions
+            },
         });
+
 
         if (!session) {
             await clearRefreshTokenCookie();
