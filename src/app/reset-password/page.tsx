@@ -42,6 +42,7 @@ function ResetPasswordContent() {
 
       if (data.success) {
         setSuccess(data.message);
+        localStorage.removeItem("accessToken"); // clear stale access token
         setTimeout(() => router.push("/login"), 3000);
       } else {
         setError(data.message);

@@ -1,11 +1,15 @@
 import nodemailer from "nodemailer";
 
+if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+  throw new Error("EMAIL_USER and EMAIL_APP_PASSWORD environment variables must be set");
+}
+
 const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_APP_PASSWORD,
-    },
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_APP_PASSWORD,
+  },
 });
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -14,16 +18,16 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
  * Send email verification link to newly registered user
  */
 export async function sendVerificationEmail(
-    to: string,
-    token: string
+  to: string,
+  token: string
 ): Promise<void> {
-    const verificationLink = `${APP_URL}/verify-email?token=${token}`;
+  const verificationLink = `${APP_URL}/verify-email?token=${token}`;
 
-    await transporter.sendMail({
-        from: `"Login Project" <${process.env.EMAIL_USER}>`,
-        to,
-        subject: "Verify Your Email Address",
-        html: `
+  await transporter.sendMail({
+    from: `"Login Project" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: "Verify Your Email Address",
+    html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2563EB;">Verify Your Email</h2>
         <p>Thank you for registering! Click the button below to verify your email address:</p>
@@ -40,23 +44,23 @@ export async function sendVerificationEmail(
         </p>
       </div>
     `,
-    });
+  });
 }
 
 /**
  * Send password reset link
  */
 export async function sendPasswordResetEmail(
-    to: string,
-    token: string
+  to: string,
+  token: string
 ): Promise<void> {
-    const resetLink = `${APP_URL}/reset-password?token=${token}`;
+  const resetLink = `${APP_URL}/reset-password?token=${token}`;
 
-    await transporter.sendMail({
-        from: `"Login Project" <${process.env.EMAIL_USER}>`,
-        to,
-        subject: "Reset Your Password",
-        html: `
+  await transporter.sendMail({
+    from: `"Login Project" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: "Reset Your Password",
+    html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2563EB;">Reset Your Password</h2>
         <p>You requested a password reset. Click the button below:</p>
@@ -73,5 +77,5 @@ export async function sendPasswordResetEmail(
         </p>
       </div>
     `,
-    });
+  });
 }
