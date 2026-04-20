@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { generateAccessToken } from "@/lib/jwt";
-import { getRefreshTokenCookie, setRefreshTokenCookie } from "@/lib/cookies";
+import { getRefreshTokenCookie, setRefreshTokenCookie, clearRefreshTokenCookie } from "@/lib/cookies";
 import { generateToken, hashToken } from "@/lib/tokens";
 import { ApiResponse, RefreshResponse } from "@/types";
 
@@ -28,6 +28,8 @@ export async function POST() {
         });
 
         if (!session) {
+            // Clear stale cookie — session no longer exists in DB
+            await clearRefreshTokenCookie();
             return NextResponse.json<ApiResponse>(
                 { success: false, message: "Invalid or expired refresh token", statusCode: 401 },
                 { status: 401 }
