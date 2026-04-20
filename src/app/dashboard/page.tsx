@@ -78,12 +78,17 @@ export default function DashboardPage() {
 
       // Fetch sessions
       const sessionsRes = await fetchWithAuth("/api/auth/sessions");
-      if (sessionsRes) {
-        const sessionsData = await sessionsRes.json();
-        setSessions(sessionsData.data || []);
+      if (!sessionsRes) {
+        // Session evicted or unauthorized — force logout
+        localStorage.removeItem("accessToken");
+        router.push("/login");
+        return;
       }
+      const sessionsData = await sessionsRes.json();
+      setSessions(sessionsData.data || []);
 
       setLoading(false);
+
     };
 
     loadData();
