@@ -1,18 +1,19 @@
 import nodemailer from "nodemailer";
 
-if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
-  throw new Error("EMAIL_USER and EMAIL_APP_PASSWORD environment variables must be set");
-}
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_APP_PASSWORD,
-  },
-});
-
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+function getTransporter() {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+    throw new Error("EMAIL_USER and EMAIL_APP_PASSWORD environment variables must be set");
+  }
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_APP_PASSWORD,
+    },
+  });
+}
 
 /**
  * Send email verification link to newly registered user
@@ -22,6 +23,7 @@ export async function sendVerificationEmail(
   token: string
 ): Promise<void> {
   const verificationLink = `${APP_URL}/verify-email?token=${token}`;
+  const transporter = getTransporter();
 
   await transporter.sendMail({
     from: `"Login Project" <${process.env.EMAIL_USER}>`,
@@ -55,6 +57,7 @@ export async function sendPasswordResetEmail(
   token: string
 ): Promise<void> {
   const resetLink = `${APP_URL}/reset-password?token=${token}`;
+  const transporter = getTransporter();
 
   await transporter.sendMail({
     from: `"Login Project" <${process.env.EMAIL_USER}>`,
